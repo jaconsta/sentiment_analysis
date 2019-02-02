@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import queryString from 'query-string'
 import styled from 'styled-components'
@@ -31,11 +31,36 @@ const emotionEmoji = ({compound}) => {
   return <PesimisticResult />
 }
 
+const fetchSentiments = queries =>
+  fetch(`http://localhost:8080/sentiment?${queries}`, {mode: 'cors'})
+    .then(res => res.json())
+    .catch(err =>  new Error(err))
+
+const initialSentiment = {
+  neg: 0.0,
+  neu: 0.0,
+  pos: 0.0,
+  compound: 0.0
+}
+
 const SentimentResults = props => {
+  const [sentiment, setSentiment] = useState(initialSentiment)
+
+  const getSentenceSentiments = async (search) => {
+    const queries = queryString.stringify(search)
+    const sentenceSentiment = await fetchSentiments(queries)
+
+    setSentiment(sentenceSentiment)
+  }
+
+  useEffect (() => {
+    getSentenceSentiments(props.search)
+  }, [props.search])
+
   return (
     <SentimentsContainer>
       Overall reaction
-      {emotionEmoji(props.sentiment)}
+      {emotionEmoji(sentiment)}
       <Link to="/"><button onClick={props.resetForm}>Clear</button></Link>
     </SentimentsContainer>
 
